@@ -23,14 +23,18 @@ def get_coin_list():
 
 # Chuyển đổi ticker sang ID
 def convert_ticker_to_id(ticker):
+    """
+    Chuyển đổi ký hiệu coin (symbol) thành ID trên CoinGecko.
+    """
     coin_list = get_coin_list()
     ticker = ticker.lower()
     for coin in coin_list:
-        if coin["symbol"] == ticker:
+        if coin["symbol"] == ticker:  # Tìm theo symbol
+            print(f"Ticker '{ticker}' được chuyển thành ID '{coin['id']}'")  # Debug
             return coin["id"]
+    print(f"Không tìm thấy ID cho ticker '{ticker}'")  # Debug
     return None
 
-# Hàm định dạng giá
 # Hàm định dạng giá
 def format_price(price):
     """
@@ -61,38 +65,14 @@ def get_crypto_price(crypto: str):
         response.raise_for_status()  # Kiểm tra lỗi HTTP
         data = response.json()
 
-        # Lấy giá trị và lưu cache
-        price = data[coin_id]["usd"]
-        price_cache[crypto] = price
-        return format_price(price)
-    except requests.exceptions.HTTPError as e:
-        print(f"HTTP error: {e}")
-        return None
-    except Exception as e:
-        print(f"Error fetching price: {e}")
-        return None
-
-# Lấy giá từ CoinGecko API
-def get_crypto_price(crypto: str):
-    try:
-        # Kiểm tra cache trước
-        if crypto in price_cache:
-            return format_price(price_cache[crypto])
-
-        # Chuyển đổi ticker sang ID
-        coin_id = convert_ticker_to_id(crypto)
-        if not coin_id:
+        # Lấy giá trị USD từ API
+        if coin_id in data and "usd" in data[coin_id]:
+            price = data[coin_id]["usd"]
+            price_cache[crypto] = price  # Lưu vào cache
+            return format_price(price)
+        else:
+            print(f"Dữ liệu không hợp lệ cho ID '{coin_id}': {data}")  # Debug
             return None
-
-        # Gọi API lấy giá
-        url = f'https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd'
-        response = requests.get(url)
-        response.raise_for_status()  # Kiểm tra lỗi HTTP
-        data = response.json()
-
-        # Lưu kết quả vào cache
-        price_cache[crypto] = data[coin_id]["usd"]
-        return format_price(price_cache[crypto])
     except requests.exceptions.HTTPError as e:
         print(f"HTTP error: {e}")
         return None
