@@ -2,7 +2,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import requests
 import os
-from cachetools import TTLCache  # Thêm thư viện Cache
+from cachetools import TTLCache
 
 # Sử dụng biến môi trường để bảo mật TOKEN
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8004946642:AAE-Cfgd2VBVMBB8CDiJpcbQxvTuX_kYcWU")
@@ -30,12 +30,24 @@ def convert_ticker_to_id(ticker):
             return coin["id"]
     return None
 
+# Hàm định dạng giá
+def format_price(price):
+    """
+    Định dạng giá trị float thành chuỗi dễ đọc.
+    - Giữ 5 chữ số thập phân cho giá trị nhỏ.
+    - Hiển thị 2 chữ số thập phân cho giá trị lớn.
+    """
+    if price < 1:
+        return f"{price:.5f}"  # Giá trị nhỏ
+    else:
+        return f"{price:,.2f}"  # Giá trị lớn
+
 # Lấy giá từ CoinGecko API
 def get_crypto_price(crypto: str):
     try:
         # Kiểm tra cache trước
         if crypto in price_cache:
-            return price_cache[crypto]
+            return format_price(price_cache[crypto])
 
         # Chuyển đổi ticker sang ID
         coin_id = convert_ticker_to_id(crypto)
@@ -50,7 +62,10 @@ def get_crypto_price(crypto: str):
 
         # Lưu kết quả vào cache
         price_cache[crypto] = data[coin_id]["usd"]
-        return price_cache[crypto]
+        return format_price(price_cache[crypto])
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP error: {e}")
+        return None
     except Exception as e:
         print(f"Error fetching price: {e}")
         return None
