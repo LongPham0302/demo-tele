@@ -13,12 +13,20 @@ price_cache = TTLCache(maxsize=100, ttl=60)  # Cache giá trong 60 giây
 
 # Lấy danh sách các coin từ CoinGecko
 def get_coin_list():
+    """
+    Lấy danh sách các coin từ CoinGecko và lưu vào bộ nhớ cache.
+    """
     global coin_cache
     if coin_cache is None:
-        url = "https://api.coingecko.com/api/v3/coins/list"
-        response = requests.get(url)
-        response.raise_for_status()  # Kiểm tra lỗi HTTP
-        coin_cache = response.json()
+        try:
+            url = "https://api.coingecko.com/api/v3/coins/list"
+            response = requests.get(url)
+            response.raise_for_status()  # Kiểm tra lỗi HTTP
+            coin_cache = response.json()
+            print(f"Tổng số coin lấy từ API: {len(coin_cache)}")  # Debug
+        except Exception as e:
+            print(f"Error fetching coin list: {e}")
+            coin_cache = []  # Đảm bảo không bị lỗi khi sử dụng sau này
     return coin_cache
 
 # Chuyển đổi ticker sang ID
@@ -49,9 +57,13 @@ def format_price(price):
 
 # Lấy giá từ CoinGecko API
 def get_crypto_price(crypto: str):
+    """
+    Lấy giá trị USD của đồng coin từ CoinGecko API.
+    """
     try:
         # Kiểm tra cache trước
         if crypto in price_cache:
+            print(f"Lấy giá từ cache cho {crypto.upper()}")  # Debug
             return format_price(price_cache[crypto])
 
         # Chuyển đổi ticker sang ID
@@ -69,6 +81,7 @@ def get_crypto_price(crypto: str):
         if coin_id in data and "usd" in data[coin_id]:
             price = data[coin_id]["usd"]
             price_cache[crypto] = price  # Lưu vào cache
+            print(f"Giá của {crypto.upper()} là {price} USD")  # Debug
             return format_price(price)
         else:
             print(f"Dữ liệu không hợp lệ cho ID '{coin_id}': {data}")  # Debug
@@ -110,6 +123,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Chạy bot
 def main():
+    """
+    Chạy bot Telegram.
+    """
     # Kiểm tra token
     if not TOKEN or TOKEN == "YOUR_BOT_TOKEN":
         print("Vui lòng đặt TOKEN bot trong biến môi trường TELEGRAM_BOT_TOKEN.")
