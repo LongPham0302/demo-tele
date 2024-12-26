@@ -31,16 +31,46 @@ def convert_ticker_to_id(ticker):
     return None
 
 # Hàm định dạng giá
+# Hàm định dạng giá
 def format_price(price):
     """
     Định dạng giá trị float thành chuỗi dễ đọc.
-    - Giữ 5 chữ số thập phân cho giá trị nhỏ.
-    - Hiển thị 2 chữ số thập phân cho giá trị lớn.
+    - Hiển thị 2 chữ số thập phân với giá trị lớn hơn 1.
+    - Hiển thị tối đa 5 chữ số thập phân với giá trị nhỏ hơn 1.
     """
-    if price < 1:
-        return f"{price:.5f}"  # Giá trị nhỏ
+    if price >= 1:
+        return f"{price:,.2f}"  # Giá trị lớn: 2 chữ số thập phân
     else:
-        return f"{price:,.2f}"  # Giá trị lớn
+        return f"{price:.5f}"  # Giá trị nhỏ: tối đa 5 chữ số thập phân
+
+# Lấy giá từ CoinGecko API
+def get_crypto_price(crypto: str):
+    try:
+        # Kiểm tra cache trước
+        if crypto in price_cache:
+            return format_price(price_cache[crypto])
+
+        # Chuyển đổi ticker sang ID
+        coin_id = convert_ticker_to_id(crypto)
+        if not coin_id:
+            return None
+
+        # Gọi API lấy giá
+        url = f'https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd'
+        response = requests.get(url)
+        response.raise_for_status()  # Kiểm tra lỗi HTTP
+        data = response.json()
+
+        # Lấy giá trị và lưu cache
+        price = data[coin_id]["usd"]
+        price_cache[crypto] = price
+        return format_price(price)
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP error: {e}")
+        return None
+    except Exception as e:
+        print(f"Error fetching price: {e}")
+        return None
 
 # Lấy giá từ CoinGecko API
 def get_crypto_price(crypto: str):
