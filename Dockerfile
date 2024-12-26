@@ -4,7 +4,7 @@ FROM python:3.9-slim
 # Thiết lập biến môi trường
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    TELEGRAM_BOT_TOKEN="your_default_token"
+    TELEGRAM_BOT_TOKEN="8004946642:AAE-Cfgd2VBVMBB8CDiJpcbQxvTuX_kYcWU"
 
 # Tạo thư mục làm việc
 WORKDIR /app
