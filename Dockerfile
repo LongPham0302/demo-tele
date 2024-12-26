@@ -1,23 +1,31 @@
 # Sử dụng image Python chính thức
 FROM python:3.9-slim
 
+# Thiết lập biến môi trường
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    TELEGRAM_BOT_TOKEN="your_default_token"
+
 # Tạo thư mục làm việc
 WORKDIR /app
 
-# Tạo người dùng mới không phải root
-RUN useradd -m myuser
+# Cài đặt các gói cần thiết
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Chuyển quyền sở hữu thư mục /app cho người dùng mới
-RUN chown -R myuser:myuser /app
+# Tạo người dùng không phải root
+RUN useradd -m myuser && chown -R myuser:myuser /app
 
-# Chạy dưới quyền người dùng không phải root
+# Chuyển sang người dùng không phải root
 USER myuser
 
-# Sao chép các file vào container
-COPY . .
+# Sao chép các file ứng dụng vào container
+COPY --chown=myuser:myuser . .
 
-# Cài đặt thư viện Python
+# Cài đặt các thư viện Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Khởi chạy ứng dụng
+# Câu lệnh khởi chạy ứng dụng
 CMD ["python", "getnew.py"]
